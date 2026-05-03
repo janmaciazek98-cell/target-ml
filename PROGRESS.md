@@ -11,8 +11,6 @@ Aplikacja mobilna (Android) służąca do automatycznego wykrywania i analizy pr
 ---
 ## 3. Stan prac - Model AI & NCNN (ZREALIZOWANE) (STUDENT 1)
 
-> **Sekcja dla kolegi:** Proszę o wpisanie aktualnego stanu prac nad modelem.
-
 - [ ] **Trening modelu:** (np. Etap zbierania danych / Trening wstępny / Ewaluacja)
 - [ ] **Konwersja:** (np. ONNX -> NCNN)
 - [ ] **Optymalizacja:** (np. Kwantyzacja modelu do FP16/INT8)
