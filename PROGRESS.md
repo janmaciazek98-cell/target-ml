@@ -41,7 +41,8 @@ Aplikacja mobilna (Android) służąca do automatycznego wykrywania i analizy pr
 
 ---
 
-## 6. Szacowany czas zakończenia
-- Prace nad modułem Android: **Zakończone**.
-- Integracja modelu (po otrzymaniu plików): **ok. 10-12h pracy**.
-- Testy końcowe i poprawki UI: **4h pracy**.
+## 6. Harmonogram i Kamienie Milowe (Milestones)
+- **Faza 1 - Model AI (Student 1):** Trening sieci neuronowej, ewaluacja na danych syntetycznych i konwersja wag do lekkiego formatu NCNN (.param, .bin). **[W TRAKCIE]**
+- **Faza 2 - Aplikacja bazowa (Student 2):** Architektura Android, integracja CameraX, pre-processing obrazu (natywnie) oraz system zapisu próbek testowych. **[ZREALIZOWANA]**
+- **Faza 3 - Wdrożenie i Integracja (Wspólnie):** Wpięcie plików modelu do kodu C++ / JNI w aplikacji Android (szacowany nakład roboczy: ok. 10-12 godzin po zamknięciu Fazy 2). **[OCZEKUJĄCA]**
+- **Faza 4 - Finalizacja (Student 2):** Kalibracja systemu pod kątem UX, dynamiczne wyświetlanie wyników w UI i testy wydajnościowe na fizycznym urządzeniu (szacowany nakład roboczy: ok. 4 godziny). **[PLANOWANA]**
