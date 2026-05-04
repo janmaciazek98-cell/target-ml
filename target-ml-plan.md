@@ -66,10 +66,9 @@ Aby ułatwić współpracę, zalecam trzymanie wszystkiego w jednym repozytorium
 
 ```text
 TargetScoringProject/
-├── data_generator/         # Projekt Prowadzącego (C++, OpenGL)
-│   ├── src/
-│   ├── CMakeLists.txt
-│   └── output/             # (Ignorowany w git) Wygenerowane dataset'y
+├── dataset/                # Datasety do treningu modeli ML Yolo
+│   ├── images/
+│   └── labels/           
 ├── ml_pipeline/            # Kod Studenta 1 (Python)
 │   ├── requirements.txt
 │   ├── train.py
