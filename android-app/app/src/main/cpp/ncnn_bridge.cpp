@@ -13,12 +13,12 @@
 ncnn::Net yolo_model;
 bool is_model_loaded = false;
 
-// Zmieniono z 2048 na 1024 zgodnie z nową rozdzielczością treningową i eksportu
 const int INPUT_SIZE = 1024;
 const int NUM_CLASSES = 11;
 
-const float CONF_THRESHOLD = 0.15f; // Próg 15% pewności modelu
-const float NMS_THRESHOLD = 0.45f;  // Próg 45% powielenia
+// Obniżamy próg pewności z 0.15f do 0.08f, aby wykrywać drobne/mniej doświetlone przestrzeliny
+const float CONF_THRESHOLD = 0.08f;
+const float NMS_THRESHOLD = 0.45f;
 
 struct Object {
     float x, y, w, h;
@@ -57,23 +57,30 @@ Java_com_example_przestrzeliny_1app_YoloDetector_initModel(JNIEnv *env, jobject 
 
     if (ret_param == 0 && ret_bin == 0) {
         is_model_loaded = true;
+        LOGD("Model NCNN załadowany pomyślnie!");
         return JNI_TRUE;
     }
+    LOGD("Błąd ładowania modelu NCNN: param=%d, bin=%d", ret_param, ret_bin);
     return JNI_FALSE;
 }
 
 extern "C" JNIEXPORT jobjectArray JNICALL
 Java_com_example_przestrzeliny_1app_YoloDetector_processImage(JNIEnv *env, jobject thiz, jobject bitmap) {
-    if (!is_model_loaded) return nullptr;
+    if (!is_model_loaded) {
+        LOGD("Model nie jest załadowany!");
+        return nullptr;
+    }
 
     AndroidBitmapInfo info;
     void* pixels = nullptr;
-    if (AndroidBitmap_getInfo(env, bitmap, &info) < 0 || AndroidBitmap_lockPixels(env, bitmap, &pixels) < 0) return nullptr;
+    if (AndroidBitmap_getInfo(env, bitmap, &info) < 0 || AndroidBitmap_lockPixels(env, bitmap, &pixels) < 0) {
+        LOGD("Błąd pobierania pikseli bitmapy!");
+        return nullptr;
+    }
 
-    ncnn::Mat input_mat = ncnn::Mat::from_pixels((const unsigned char*)pixels, ncnn::Mat::PIXEL_RGBA2BGR, info.width, info.height);
+    ncnn::Mat input_mat = ncnn::Mat::from_pixels((const unsigned char*)pixels, ncnn::Mat::PIXEL_RGBA2RGB, info.width, info.height);
     AndroidBitmap_unlockPixels(env, bitmap);
 
-    // AI pracuje teraz na przeskalowanej rozdzielczości 1024x1024
     ncnn::Mat resized_mat;
     ncnn::resize_bilinear(input_mat, resized_mat, INPUT_SIZE, INPUT_SIZE);
     const float norm_vals[3] = {1 / 255.f, 1 / 255.f, 1 / 255.f};
@@ -89,6 +96,8 @@ Java_com_example_przestrzeliny_1app_YoloDetector_processImage(JNIEnv *env, jobje
     bool is_transposed = output_mat.h > output_mat.w;
     int num_anchors = is_transposed ? output_mat.h : output_mat.w;
 
+    float highest_score = -1.0f;
+
     for (int i = 0; i < num_anchors; i++) {
         float max_score = -1.0f;
         int best_label = -1;
@@ -101,14 +110,17 @@ Java_com_example_przestrzeliny_1app_YoloDetector_processImage(JNIEnv *env, jobje
             }
         }
 
+        if (max_score > highest_score) {
+            highest_score = max_score;
+        }
+
         if (max_score > CONF_THRESHOLD) {
             float raw_x = is_transposed ? output_mat.row(i)[0] : output_mat.row(0)[i];
             float raw_y = is_transposed ? output_mat.row(i)[1] : output_mat.row(1)[i];
             float raw_w = is_transposed ? output_mat.row(i)[2] : output_mat.row(2)[i];
             float raw_h = is_transposed ? output_mat.row(i)[3] : output_mat.row(3)[i];
 
-            // Próg wielkości przeskalowany o połowę (z 2->500 na 1->250), pasujący do 1024px
-            if (raw_w < 1.0f || raw_h < 1.0f || raw_w > 250.0f || raw_h > 250.0f) continue;
+            if (raw_w < 1.0f || raw_h < 1.0f || raw_w > 1024.0f || raw_h > 1024.0f) continue;
 
             Object obj;
             obj.x = raw_x;
@@ -120,6 +132,8 @@ Java_com_example_przestrzeliny_1app_YoloDetector_processImage(JNIEnv *env, jobje
             proposals.push_back(obj);
         }
     }
+
+    LOGD("Najwyższa pewność w modelu: %.4f, liczba detekcji > %.2f: %zu", highest_score, CONF_THRESHOLD, proposals.size());
 
     std::sort(proposals.begin(), proposals.end(), compare_objects);
     std::vector<int> picked;
@@ -133,7 +147,8 @@ Java_com_example_przestrzeliny_1app_YoloDetector_processImage(JNIEnv *env, jobje
         if (keep) picked.push_back(i);
     }
 
-    // Wysyłamy obiekty do Javy
+    LOGD("Po NMS pozostało: %zu detekcji", picked.size());
+
     jclass detClass = env->FindClass("com/example/przestrzeliny_app/Detection");
     jmethodID detInit = env->GetMethodID(detClass, "<init>", "(FFFFIF)V");
     jobjectArray detArray = env->NewObjectArray(picked.size(), detClass, NULL);
