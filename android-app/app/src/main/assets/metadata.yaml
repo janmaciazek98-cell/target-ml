@@ -1,15 +1,16 @@
-description: Ultralytics YOLO11n model trained on dataset.yaml
+description: Ultralytics YOLO11n model trained on D:\bin\trainer_1024\dataset_v2_24000\data.yaml
 author: Ultralytics
-date: '2026-05-24T18:44:26.763193'
-version: 8.4.47
+date: '2026-09-09T20:19:23.303725+02:00'
+version: 8.4.143
 license: AGPL-3.0 License (https://ultralytics.com/license)
 docs: https://docs.ultralytics.com
 stride: 32
 task: detect
+head: Detect
 batch: 1
 imgsz:
-- 2048
-- 2048
+- 1024
+- 1024
 names:
   0: 0 punktow
   1: 1 punkt
@@ -24,6 +25,6 @@ names:
   10: 10 punktow
 args:
   batch: 1
-  half: false
+  quantize: null
 channels: 3
 end2end: false

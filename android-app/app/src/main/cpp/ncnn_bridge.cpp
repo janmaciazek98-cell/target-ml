@@ -13,12 +13,12 @@
 ncnn::Net yolo_model;
 bool is_model_loaded = false;
 
-// Skoro model był trenowany na 2048
-const int INPUT_SIZE = 2048;
+// Zmieniono z 2048 na 1024 zgodnie z nową rozdzielczością treningową i eksportu
+const int INPUT_SIZE = 1024;
 const int NUM_CLASSES = 11;
 
-const float CONF_THRESHOLD = 0.15f;// Próg 15% pewności modelu
-const float NMS_THRESHOLD = 0.45f; // Próg 45% powielenia
+const float CONF_THRESHOLD = 0.15f; // Próg 15% pewności modelu
+const float NMS_THRESHOLD = 0.45f;  // Próg 45% powielenia
 
 struct Object {
     float x, y, w, h;
@@ -70,9 +70,10 @@ Java_com_example_przestrzeliny_1app_YoloDetector_processImage(JNIEnv *env, jobje
     void* pixels = nullptr;
     if (AndroidBitmap_getInfo(env, bitmap, &info) < 0 || AndroidBitmap_lockPixels(env, bitmap, &pixels) < 0) return nullptr;
 
-    ncnn::Mat input_mat = ncnn::Mat::from_pixels((const unsigned char*)pixels, ncnn::Mat::PIXEL_RGBA2BGR, info.width, info.height);AndroidBitmap_unlockPixels(env, bitmap);
+    ncnn::Mat input_mat = ncnn::Mat::from_pixels((const unsigned char*)pixels, ncnn::Mat::PIXEL_RGBA2BGR, info.width, info.height);
+    AndroidBitmap_unlockPixels(env, bitmap);
 
-    // AI pracuje na pełnej rozdzielczości 2048x2048
+    // AI pracuje teraz na przeskalowanej rozdzielczości 1024x1024
     ncnn::Mat resized_mat;
     ncnn::resize_bilinear(input_mat, resized_mat, INPUT_SIZE, INPUT_SIZE);
     const float norm_vals[3] = {1 / 255.f, 1 / 255.f, 1 / 255.f};
@@ -106,8 +107,8 @@ Java_com_example_przestrzeliny_1app_YoloDetector_processImage(JNIEnv *env, jobje
             float raw_w = is_transposed ? output_mat.row(i)[2] : output_mat.row(2)[i];
             float raw_h = is_transposed ? output_mat.row(i)[3] : output_mat.row(3)[i];
 
-            // Odrzucamy ewidentne śmieci z błędów pamięci (np. gigantyczne wymiary)
-            if (raw_w < 2.0f || raw_h < 2.0f || raw_w > 500.0f || raw_h > 500.0f) continue;
+            // Próg wielkości przeskalowany o połowę (z 2->500 na 1->250), pasujący do 1024px
+            if (raw_w < 1.0f || raw_h < 1.0f || raw_w > 250.0f || raw_h > 250.0f) continue;
 
             Object obj;
             obj.x = raw_x;

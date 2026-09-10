@@ -10,7 +10,7 @@ def main():
     results = model.train(
         data='dataset.yaml',   
         epochs=50,             
-        imgsz=640,             
+        imgsz=1024,
         batch=16,              
         patience=15,           
         device='cpu',

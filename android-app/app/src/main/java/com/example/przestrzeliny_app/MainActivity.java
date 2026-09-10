@@ -65,9 +65,7 @@ public class MainActivity extends AppCompatActivity {
         txtResult = findViewById(R.id.txtResult);
         imageViewResult = findViewById(R.id.imageViewResult);
 
-
         imageViewResult.setOnClickListener(v -> {
-
             imageViewResult.setVisibility(View.GONE);
         });
 
@@ -90,7 +88,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void takePhotoAndProcess() {
-        // Kliknięto przycisk  ->  teraz czyścimy stary wynik i piszemy, że analizujemy
         txtResult.setText("Analizuję strzał...");
 
         ImageCapture imageCapture = cameraManager.getImageCapture();
@@ -117,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
                     int startY = Math.max(0, (rotatedBitmap.getHeight() - cropSize) / 2);
 
                     Bitmap squareBitmap = Bitmap.createBitmap(rotatedBitmap, startX, startY, cropSize, cropSize);
-                    Bitmap croppedAndScaledBitmap = Bitmap.createScaledBitmap(squareBitmap, 2048, 2048, true);
+                    Bitmap croppedAndScaledBitmap = Bitmap.createScaledBitmap(squareBitmap, 1024, 1024, true);
 
                     Detection[] wyniki = yoloDetector.processImage(croppedAndScaledBitmap);
 
@@ -127,39 +124,36 @@ public class MainActivity extends AppCompatActivity {
                         Paint paintKolo = new Paint();
                         paintKolo.setColor(Color.RED);
                         paintKolo.setStyle(Paint.Style.STROKE);
-                        paintKolo.setStrokeWidth(12f);
+                        paintKolo.setStrokeWidth(6f);
                         Paint paintTekst = new Paint();
                         paintTekst.setColor(Color.GREEN);
-                        paintTekst.setTextSize(60f);
+                        paintTekst.setTextSize(30f);
                         paintTekst.setFakeBoldText(true);
 
                         float SKALA_TARCZY = 0.84f;
-                        float srodekX = 1024f, srodekY = 1024f;
-                        double promienTarczy = 1024.0 * SKALA_TARCZY;
+                        float srodekX = 512f, srodekY = 512f;
+                        double promienTarczy = 512.0 * SKALA_TARCZY;
                         double szerokoscStrefy = promienTarczy / 10.0;
 
                         StringBuilder raport = new StringBuilder();
-                        int sumaPunktow = 0; // Zmienna do liczenia sumy
+                        int sumaPunktow = 0;
 
                         for (Detection det : wyniki) {
                             double dystans = Math.sqrt(Math.pow(det.x - srodekX, 2) + Math.pow(det.y - srodekY, 2));
                             int punkty = Math.max(0, (int)(10 - (dystans / szerokoscStrefy)));
 
-                            sumaPunktow += punkty; // Dodajemy trafienie do sumy całkowitej
+                            sumaPunktow += punkty;
 
-                            canvas.drawCircle(det.x, det.y, 40f, paintKolo);
-                            canvas.drawText(String.valueOf(punkty), det.x + 45, det.y + 20, paintTekst);
+                            canvas.drawCircle(det.x, det.y, 20f, paintKolo);
+                            canvas.drawText(String.valueOf(punkty), det.x + 22, det.y + 10, paintTekst);
                             raport.append("Punkty: ").append(punkty).append("\n");
                         }
 
-                        // Dodanie podsumowania na końcu raportu
                         raport.append("----------------\n");
                         raport.append("Suma: ").append(sumaPunktow);
 
                         runOnUiThread(() -> {
-                            // Podmieniamy treść na raport z punktami i sumą
                             txtResult.setText(raport.toString());
-
                             imageViewResult.setImageBitmap(wynikowaBitmapa);
                             imageViewResult.setVisibility(View.VISIBLE);
                             saveResultToGallery(wynikowaBitmapa);
@@ -174,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
                     rawBitmap.recycle();
                     rotatedBitmap.recycle();
                 } catch (Exception e) {
-                    Log.e("Error", e.getMessage());
+                    Log.e("Error", e.getMessage() != null ? e.getMessage() : "Unknown error");
                     runOnUiThread(() -> txtResult.setText("Błąd analizy"));
                 } finally {
                     image.close();
@@ -198,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
         try (FileOutputStream out = new FileOutputStream(file)) {
             bitmap.compress(Bitmap.CompressFormat.JPEG, 95, out);
             MediaScannerConnection.scanFile(this, new String[]{file.getAbsolutePath()}, null, null);
-            runOnUiThread(() -> Toast.makeText(this, "Zapisano wynik v Galerii!", Toast.LENGTH_SHORT).show());
+            runOnUiThread(() -> Toast.makeText(this, "Zapisano wynik w Galerii!", Toast.LENGTH_SHORT).show());
         } catch (Exception e) {
             e.printStackTrace();
         }
