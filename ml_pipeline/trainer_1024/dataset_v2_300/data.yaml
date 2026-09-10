@@ -1,0 +1,20 @@
+path: D:/bin/trainer_1024/dataset_v2_300
+train: train/images
+val: val/images
+
+# Liczba klas: 11 (od 0 do 10 punktów)
+nc: 11
+
+# Nazwy klas przypisane do odpowiednich ID
+names:
+  0: '0 punktow'
+  1: '1 punkt'
+  2: '2 punkty'
+  3: '3 punkty'
+  4: '4 punkty'
+  5: '5 punktow'
+  6: '6 punktow'
+  7: '7 punktow'
+  8: '8 punktow'
+  9: '9 punktow'
+  10: '10 punktow'
